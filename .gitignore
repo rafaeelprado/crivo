@@ -32,3 +32,10 @@ venv/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Sobras de anexos de conversa / arquivos duplicados por sincronização —
+# nunca fazem parte do código-fonte do projeto
+Claude outputs/
+*-1.py
+*-1.svg
+*-1.md
