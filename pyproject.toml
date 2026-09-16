@@ -1,0 +1,57 @@
+[project]
+name = "sistema-rag"
+version = "0.1.0"
+description = "Crivo — assistente de RAG para due diligence contratual com citações verificadas"
+requires-python = ">=3.11"
+readme = "README.md"
+
+dependencies = [
+    # API
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "python-dotenv>=1.0",
+    # Ingestão
+    "pymupdf>=1.24",
+    # Índice e busca
+    "chromadb>=0.5.20",
+    "sentence-transformers>=3.3",
+    "rank-bm25>=0.2.2",
+    # Geração e verificação
+    "anthropic>=0.40",
+    "rapidfuzz>=3.10",
+    # UI
+    "streamlit>=1.45",
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+]
+eval = [
+    "ragas>=0.2",
+    "datasets>=3.0",
+    "pandas>=2.2",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

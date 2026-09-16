@@ -1,0 +1,34 @@
+# Segredos
+.env
+.streamlit/secrets.toml
+
+# Dados — o corpus (PDFs + manifest.csv) vai pro git de propósito: são
+# contratos públicos do PNCP, escolhidos por serem publicáveis sem risco, e
+# é o que torna a demo reproduzível por quem clona o repo pela primeira vez.
+# O que NÃO vai é o que é derivado e grande (chunks, índice, logs) — isso se
+# regenera com os comandos de `docs/COMO_RODAR.md`.
+data/processed/*
+!data/processed/.gitkeep
+data/chroma/*
+!data/chroma/.gitkeep
+data/logs/*
+!data/logs/.gitkeep
+
+# Modelos baixados do HuggingFace
+.cache/
+models/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Editor / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

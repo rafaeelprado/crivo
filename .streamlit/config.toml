@@ -1,0 +1,26 @@
+# Tema do Crivo — os valores vêm de docs/IDENTIDADE.md.
+# Não edite um hex aqui sem atualizar lá: este arquivo é consumidor, não fonte.
+
+[theme]
+base = "light"
+
+primaryColor = "#14243D"            # Marinho — marca e elementos primários
+backgroundColor = "#FBFAF7"         # Papel — off-white quente, não branco puro
+secondaryBackgroundColor = "#F2F0EA" # Papel sombreado — sidebar, cards
+textColor = "#22262B"               # Grafite
+linkColor = "#1F3A5F"               # Marinho médio
+borderColor = "#DDD9D0"             # Linha
+
+# Fontes: a sans e a mono já são as padrão do Streamlit (Source Sans 3 /
+# Source Code Pro). Só a serifa dos títulos é carregada à parte — ver o CSS
+# em ui/app.py, que também cobre versões do Streamlit sem `headingFont`.
+headingFont = "Lora, Georgia, serif"
+
+baseRadius = "small"
+showSidebarBorder = true
+
+[client]
+toolbarMode = "minimal"
+
+[server]
+headless = true

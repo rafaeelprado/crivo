@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Crivo">
+  <title>Crivo</title>
+  <!-- Versão para 16px: mesmo C do símbolo principal, com traço mais
+       espesso e abertura mais larga — a única forma de manter a leitura
+       do check dentro do C quando o ícone encolhe até um favicon. -->
+  <rect x="0" y="0" width="64" height="64" rx="14" fill="#14243D"/>
+  <path d="M 45.40 21.53 A 17.0 17.0 0 1 0 45.40 42.47" fill="none" stroke="#FBFAF7" stroke-width="13" stroke-linecap="round"/>
+  <path d="M 24.7 32.8 L 29.3 37.8 L 38.8 24.9" fill="none" stroke="#9C7B4D" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

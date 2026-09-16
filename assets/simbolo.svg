@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Simbolo do Crivo: um C que abre para uma marca de verificacao, o que passou pelo crivo e foi confirmado">
+  <title>Crivo</title>
+  <!-- O C: inicial de Crivo. Terminações arredondadas — não são serifas
+       fingidas numa curva (o resultado ficava com aspecto de gancho, ver
+       docs/IDENTIDADE.md), e sim o mesmo peso de traço do check, com o
+       mesmo remate. Consistência de terminação é o que faz o símbolo ler
+       como uma família, não duas ideias coladas. -->
+  <path d="M 45.93 22.25 A 17 17 0 1 0 45.93 41.75" fill="none" stroke="#14243D"
+        stroke-width="11" stroke-linecap="round"/>
+  <!-- Marca de verificação, encaixada na própria abertura do C -->
+  <path d="M 24.3 32.6 L 29.3 38 L 40.2 24.3" fill="none" stroke="#9C7B4D"
+        stroke-width="5.4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
