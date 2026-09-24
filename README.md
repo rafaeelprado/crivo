@@ -154,6 +154,8 @@ pytest -q
 docker compose up --build
 ```
 
+Pressupõe que o passo "2. Montar o índice a partir do seu corpus" já foi executado — o Compose sobe a API e a UI, não a ingestão.
+
 > **Windows:** o `Makefile` é um atalho para quem tem `make`. Sem ele, use os comandos completos acima — são exatamente o que cada alvo do Makefile executa.
 
 ## Decisões técnicas

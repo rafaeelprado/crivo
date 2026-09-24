@@ -2,6 +2,7 @@ services:
   api:
     build: .
     container_name: crivo-api
+    restart: unless-stopped
     ports:
       - "8000:8000"
     env_file:
@@ -19,6 +20,7 @@ services:
   ui:
     build: .
     container_name: crivo-ui
+    restart: unless-stopped
     command: streamlit run ui/app.py --server.port 8501 --server.address 0.0.0.0
     ports:
       - "8501:8501"
