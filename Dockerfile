@@ -19,6 +19,7 @@ RUN pip install --upgrade pip && pip install -e .
 COPY ui/ ./ui/
 COPY tests/ ./tests/
 COPY scripts/ ./scripts/
+COPY assets/ ./assets/
 
 EXPOSE 8000 8501
 CMD ["uvicorn", "rag.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

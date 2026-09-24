@@ -15,16 +15,9 @@ Responde perguntas sobre um acervo de contratos citando documento, cláusula, p�
 
 </div>
 
-<!-- ─────────────────────────────────────────────────────────────────────────
-     CAPTURA DE TELA — inserir aqui, com o corpus real indexado:
-       1. assets/captura-resposta.png  → resposta com citação clicada e o
-          texto-fonte aberto no painel da direita
-       2. assets/captura-abstencao.png → pergunta fora do corpus, abstenção
-     Enquanto não existirem, este bloco fica comentado (o GitHub renderizaria
-     um ícone de imagem quebrada).
+<img src="assets/captura-resposta.png" alt="Resposta com citacao verificada e o texto-fonte aberto, mostrando a Clausula Decima Terceira com pagina e score de rerank">
 
-<img src="assets/captura-resposta.png" alt="Resposta com citação verificada e o texto-fonte aberto">
-────────────────────────────────────────────────────────────────────────── -->
+<img src="assets/captura-abstencao.png" alt="Abstencao numa pergunta fora do escopo dos contratos, com o motivo tecnico exposto: score abaixo do limiar de confianca">
 
 ---
 
