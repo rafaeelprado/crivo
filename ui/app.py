@@ -31,7 +31,9 @@ import httpx
 import streamlit as st
 
 API_URL = os.getenv("API_URL", "http://localhost:8000")
-REQUEST_TIMEOUT = 120.0
+# Timeout generoso: reranking + chamada à Claude podem levar tempo.
+# A API tem retry, mas clientside também ajuda a não travar.
+REQUEST_TIMEOUT = 180.0  # 3 minutos
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "assets"
@@ -205,17 +207,29 @@ def mensagem_de_falha(exc: Exception) -> str:
     if "rate_limit" in texto:
         return "Limite de requisições da Claude API atingido. Tente de novo em alguns segundos."
 
+    # Timeouts podem vir de vários lugares: busca (reranking), geração (Claude),
+    # ou latência de rede. O sistema agora faz retry automático, mas se chegou
+    # aqui é porque até 3 tentativas com backoff falharam.
+    if isinstance(exc, (httpx.ReadTimeout, httpx.WriteTimeout)) or "timeout" in texto.lower():
+        return (
+            "⏱️ A consulta demorou demais para responder. "
+            "Pode ser: reranking/embeddings lentos, latência de rede, ou a Claude API sobrecarregada. "
+            "O sistema já tentou 3 vezes com backoff. Tente uma pergunta mais simples ou aguarde."
+        )
+
     if isinstance(exc, httpx.HTTPStatusError):
         if exc.response.status_code == 503:
             return (
                 "A API respondeu 503: a geração está indisponível. Normalmente é a "
                 "ANTHROPIC_API_KEY faltando no .env da API."
             )
-        return f"A API respondeu {exc.response.status_code}."
+        if exc.response.status_code >= 500:
+            return f"Erro de servidor (HTTP {exc.response.status_code}). Tente de novo em alguns momentos."
+        return f"A API respondeu erro HTTP {exc.response.status_code}."
     if isinstance(exc, httpx.ConnectError):
-        return f"Não foi possível conectar em {API_URL}. A API está no ar?"
-    if isinstance(exc, httpx.ReadTimeout):
-        return "A API demorou demais para responder."
+        return f"Não foi possível conectar em {API_URL}. A API está rodando?"
+    if isinstance(exc, (httpx.NetworkError, httpx.ProtocolError)):
+        return f"Falha de rede/protocolo com a API em {API_URL}. Verifique a conexão."
 
     return texto
 
@@ -226,31 +240,45 @@ def stream_query(query: str, documents: list[str] | None, on_stage) -> dict[str,
     `on_stage` é chamado a cada evento `status` com o texto da etapa —
     exatamente o que o hook `on_stage` de `answer_question` (Fase 4) emite, só
     que consumido aqui do lado do cliente via SSE em vez de direto em processo.
+
+    Timeout generoso porque o sistema é síncrono e pode levar tempo:
+    - Reranking (cross-encoder): até alguns segundos
+    - Geração (Claude API): até alguns segundos mais
+    - Retry automático com backoff: +tempo nos casos de falha transitória
     """
     payload: dict[str, Any] = {"query": query}
     if documents:
         payload["documents"] = documents
 
     event = None
-    with httpx.stream(
-        "POST", f"{API_URL}/query/stream", json=payload, timeout=REQUEST_TIMEOUT
-    ) as response:
-        response.raise_for_status()
-        for line in response.iter_lines():
-            if not line:
-                continue
-            if line.startswith("event:"):
-                event = line.split(":", 1)[1].strip()
-            elif line.startswith("data:"):
-                # maxsplit=1 é essencial: o JSON do payload também tem ":"
-                # dentro, e um split sem limite fatiaria o conteúdo ao meio.
-                data = json.loads(line.split(":", 1)[1].strip())
-                if event == "status":
-                    on_stage(data["stage"])
-                elif event == "result":
-                    return data
-                elif event == "error":
-                    raise RuntimeError(data["message"])
+    try:
+        with httpx.stream(
+            "POST",
+            f"{API_URL}/query/stream",
+            json=payload,
+            timeout=REQUEST_TIMEOUT,
+        ) as response:
+            response.raise_for_status()
+            for line in response.iter_lines():
+                if not line:
+                    continue
+                if line.startswith("event:"):
+                    event = line.split(":", 1)[1].strip()
+                elif line.startswith("data:"):
+                    # maxsplit=1 é essencial: o JSON do payload também tem ":"
+                    # dentro, e um split sem limite fatiaria o conteúdo ao meio.
+                    data = json.loads(line.split(":", 1)[1].strip())
+                    if event == "status":
+                        on_stage(data["stage"])
+                    elif event == "result":
+                        return data
+                    elif event == "error":
+                        raise RuntimeError(data["message"])
+    except (httpx.TimeoutException, httpx.NetworkError) as e:
+        # Erros de timeout/rede são capturados aqui e repassados como
+        # RuntimeError — a UI trata ambos iguais via `mensagem_de_falha`.
+        raise RuntimeError(f"Falha de comunicação com a API: {type(e).__name__}") from e
+
     raise RuntimeError("o servidor encerrou o stream sem devolver um resultado")
 
 
@@ -387,7 +415,11 @@ with col_chat:
                 # Mais colunas que citações: os botões ficam estreitos, com
                 # peso de referência, não de ação principal.
                 cols = st.columns(max(len(msg["citations"]), 6))
-                for col, citation in zip(cols, msg["citations"], strict=False):
+                # `j` (posição na lista, não `source_id`) garante chave única:
+                # o modelo pode citar a mesma fonte mais de uma vez na mesma
+                # resposta (uma citação por afirmação, não por fonte), então
+                # `source_id` sozinho pode se repetir dentro de `citations`.
+                for j, (col, citation) in enumerate(zip(cols, msg["citations"], strict=False)):
                     marca = "✓" if citation["verified"] else "✕"
                     ajuda = (
                         f"{citation['document']} — {citation['clause']}, "
@@ -396,7 +428,7 @@ with col_chat:
                     )
                     if col.button(
                         f"[{citation['source_id']}] {marca}",
-                        key=f"cit-{i}-{citation['source_id']}",
+                        key=f"cit-{i}-{j}-{citation['source_id']}",
                         help=ajuda,
                         use_container_width=True,
                     ):

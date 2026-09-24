@@ -1,4 +1,4 @@
-"""Fase 4 — orquestração: recuperação -> geração -> verificação -> resposta.
+﻿"""Fase 4 — orquestração: recuperação -> geração -> verificação -> resposta.
 
 Aqui se juntam as quatro defesas contra alucinação descritas no PLANO.md:
 
@@ -101,6 +101,8 @@ def answer_question(
     chunk_store: dict[str, dict] | None = None,
     log: bool = True,
     on_stage: StageHook | None = None,
+    disable_reranking: bool = False,
+    dense_only: bool = False,
 ) -> AnswerResult:
     """Ponto de entrada da Fase 4. Devolve sempre um AnswerResult — nunca
     lança por causa de conteúdo do modelo (só por erro de infraestrutura,
@@ -125,8 +127,13 @@ def answer_question(
         bm25=bm25,
         chunk_ids=chunk_ids,
         chunk_store=chunk_store,
+        dense_only=dense_only,
     )
-    ranked = rerank(query, candidates, top_n=rerank_top_n, scorer=scorer)
+    if disable_reranking:
+        top_n = rerank_top_n or settings.rerank_top_n
+        ranked = [RankedChunk(chunk=c, rerank_score=1.0) for c in candidates[:top_n]]
+    else:
+        ranked = rerank(query, candidates, top_n=rerank_top_n, scorer=scorer)
 
     if not ranked:
         result = _abstain(query, "a busca não encontrou nenhum chunk candidato")
@@ -136,7 +143,7 @@ def answer_question(
         return result
 
     top_score = ranked[0].rerank_score
-    if top_score < min_rerank_score:
+    if not disable_reranking and top_score < min_rerank_score:
         result = _abstain(
             query,
             f"melhor resultado da busca (score={top_score:.3f}) fica abaixo do "
@@ -274,3 +281,8 @@ def _generate_and_verify(
         retry_prompt = user_prompt + "\n\n" + build_retry_prompt([f.to_dict() for f in failed])
         tool_input = model_caller(SYSTEM_PROMPT, [{"role": "user", "content": retry_prompt}])
         retries += 1
+
+
+
+
+

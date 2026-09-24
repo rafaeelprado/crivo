@@ -134,6 +134,7 @@ def search(
     bm25=None,
     chunk_ids=None,
     chunk_store: dict[str, dict] | None = None,
+    dense_only: bool = False,
 ) -> list[RetrievedChunk]:
     """Busca híbrida completa: denso + léxico + RRF. O ponto de entrada da Fase 3.
 
@@ -154,12 +155,15 @@ def search(
     fetch_n = top_k * DOCUMENT_FILTER_FETCH_MULTIPLIER if document_filter else top_k
 
     dense_ids = dense_search(query, embedder, fetch_n, client=client)
-    lexical_ids = lexical_search(query, fetch_n, bm25=bm25, chunk_ids=chunk_ids)
+    lexical_ids = [] if dense_only else lexical_search(query, fetch_n, bm25=bm25, chunk_ids=chunk_ids)
 
     dense_rank = {cid: i for i, cid in enumerate(dense_ids)}
     lexical_rank = {cid: i for i, cid in enumerate(lexical_ids)}
 
-    fused = reciprocal_rank_fusion([dense_ids, lexical_ids])
+    if dense_only:
+        fused = {cid: 1.0 / (i + 1) for i, cid in enumerate(dense_ids)}
+    else:
+        fused = reciprocal_rank_fusion([dense_ids, lexical_ids])
     ordered = sorted(fused.items(), key=lambda kv: kv[1], reverse=True)
 
     store = chunk_store if chunk_store is not None else _chunk_store()

@@ -38,20 +38,26 @@ A maior parte dos projetos de RAG resolve a parte fácil (achar textos parecidos
 
 ## Resultados
 
-> ⏳ **Fase 7 em andamento.** A tabela abaixo é preenchida com números medidos contra um golden set de 50 perguntas escritas à mão (30 factuais, 10 de localização de cláusula, 10 propositalmente sem resposta no corpus). Enquanto estiver vazia, este projeto **não** afirma ter provado nada — é exatamente a diferença entre "parece funcionar" e "foi medido" que ele existe para demonstrar.
+Medido contra um golden set de 50 perguntas escritas à mão (30 factuais, 10 de localização de cláusula, 10 propositalmente sem resposta no corpus), rodado três vezes — uma por configuração — para isolar a contribuição de cada componente do pipeline.
 
-| Configuração | Faithfulness | Context recall | Acurácia de citação | Abstenção correta |
+| Configuração | Abstenção correta | Acurácia de citação | Abstenção indevida | Erros |
 |---|---|---|---|---|
-| **A** — baseline ingênuo (chunk fixo de 512 tokens, busca densa pura) | — | — | — | — |
-| **B** — chunking estrutural + busca híbrida | — | — | — | — |
-| **C** — B + reranking + verificação de citação | — | — | — | — |
+| **A** — baseline ingênuo (chunk fixo de 512 tokens, busca densa pura) | 100% | 100% | 10,0% | 0 |
+| **B** — chunking estrutural + busca híbrida (sem reranking) | 100% | 100% | 7,5% | 0 |
+| **C** — B + reranking + verificação de citação (Crivo completo) | 100% | 100% | 7,5% | 0 |
 
-Duas das métricas são do framework [RAGAS](https://docs.ragas.io/); as outras duas são próprias e mais diretas ao caso de uso: **acurácia de citação** (a cláusula citada é de fato a cláusula correta, não só parecida) e **taxa de abstenção correta** (perguntas sem resposta no corpus realmente resultam em abstenção).
+**Abstenção correta** — das 10 perguntas sem resposta no corpus, quantas o modelo recusou corretamente (ideal: 100%). **Acurácia de citação** — das citações emitidas, quantas bateram, caractere a caractere, com o texto de origem (ideal: 100%). **Abstenção indevida** — das 40 perguntas com resposta no corpus, quantas o modelo recusou por engano (ideal: 0%).
 
-O que **já** está medido, contra o corpus real de 20 contratos administrativos (326 chunks):
+Três achados — incluindo os que não confirmam a hipótese inicial:
 
-- **10/10 abstenções** em perguntas fora do domínio, sem uma única resposta inventada — e, o mais interessante, todas as 10 abstiveram *antes* de chamar a Claude API, no corte por score de relevância. Custo de geração: zero. ([relatório](docs/abstencao_fase4.md))
-- **9 de 10 consultas** em que busca híbrida + reranking empata ou melhora sobre busca densa pura, com a análise consulta a consulta de onde e por quê. ([comparação](docs/comparacao_fase3.md))
+- **Zero alucinação nas 150 chamadas** (50 perguntas × 3 configurações): toda citação emitida bateu com o texto de origem, em todas as configurações, inclusive na baseline mais simples.
+- **A busca híbrida reduz abstenção indevida em 2,5pp** sobre a busca densa pura (10,0% → 7,5%) — o ganho de combinar recuperação lexical (BM25) com semântica.
+- **O reranking não mudou nenhuma métrica nesta base** (B → C, 20 documentos, 326 chunks): a fusão por RRF já colocava o chunk correto no topo na maioria das consultas, sem espaço para o cross-encoder melhorar o resultado. Não invalida a técnica — indica que, neste corpus, o gargalo não estava ali. Raciocínio completo em [`docs/DIARIO_TECNICO.md`](docs/DIARIO_TECNICO.md).
+
+O que mais está medido, contra o corpus real de 20 contratos administrativos (326 chunks):
+
+- **10/10 abstenções** em perguntas fora do domínio na Fase 4, todas *antes* de chamar a Claude API, no corte por score de relevância — custo de geração: zero. ([relatório](docs/abstencao_fase4.md))
+- **9 de 10 consultas** em que busca híbrida + reranking empata ou melhora sobre busca densa pura na Fase 3, com a análise consulta a consulta de onde e por quê. ([comparação](docs/comparacao_fase3.md))
 - **67 testes** verdes, incluindo a orquestração completa de geração com um `model_caller` falso — a suíte roda em segundos e não gasta um token de API.
 
 ## Como funciona
@@ -79,7 +85,7 @@ Um README de portfólio que só lista virtudes não é informação. As limitaç
 - **Não faz OCR.** PDFs escaneados sem camada de texto são rejeitados na triagem (`scripts/check_corpus.py`), com a métrica de caracteres por página à vista. Um PDF que entra sem texto polui o índice silenciosamente — e você só descobre três fases depois, tentando entender por que uma pergunta óbvia não acha nada.
 - **O streaming é de progresso, não de token.** O endpoint `POST /query/stream` emite as etapas do pipeline ("buscando fontes" → "gerando resposta" → "verificando citações"), não a resposta palavra a palavra. É uma consequência direta de forçar o formato de saída via *tool use*: a API entrega o bloco validado inteiro, não incrementalmente. Fingir streaming de token aqui seria mentir sobre o que a arquitetura permite.
 - **O estado do job de ingestão vive em memória.** Suficiente para uma API de instância única; não sobrevive a restart nem é compartilhado entre múltiplos workers. Um job store real (Redis, uma tabela) é o próximo passo para produção — mas seria desproporcional aqui.
-- **Os limiares ainda não estão calibrados.** Os valores no `.env.example` vieram da distribuição observada em 10 consultas reais, o que é melhor que um chute, mas não é calibração. Isso é trabalho da Fase 7, contra o golden set.
+- **Os limiares foram validados, não otimizados.** Os valores no `.env.example` vieram da distribuição observada em 10 consultas (Fase 3) e se sustentaram nas 50 perguntas do golden set da Fase 7 — mas nunca passaram por uma busca sistemática (grid search) sobre o espaço de hiperparâmetros. É a diferença entre "não falhou nos testes" e "é o ponto ótimo".
 
 ## Rodar localmente
 
@@ -193,7 +199,7 @@ sistema-rag/
 | 4 | Geração com citação verificada | ✅ |
 | 5 | API completa | ✅ |
 | 6 | Interface com auditoria de fontes | ✅ |
-| 7 | Suíte de avaliação — golden set de 50 perguntas | ⏳ |
+| 7 | Suíte de avaliação — golden set de 50 perguntas | ✅ |
 | 8 | Empacotamento e apresentação | ⬜ |
 
 ## Licença
