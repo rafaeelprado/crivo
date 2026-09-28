@@ -19,6 +19,11 @@ Responde perguntas sobre um acervo de contratos citando documento, cl√°usula, p√
 
 <img src="assets/captura-abstencao.png" alt="Abstencao numa pergunta fora do escopo dos contratos, com o motivo tecnico exposto: score abaixo do limiar de confianca">
 
+
+### Video de demonstracao
+
+<img src="assets/crivo-demo.gif" alt="Demonstracao do Crivo: uma pergunta real com resposta citada e verificada, seguida de uma pergunta fora do escopo dos contratos recusada corretamente (abstencao), com o motivo tecnico exposto na tela">
+
 ---
 
 ## A tese
