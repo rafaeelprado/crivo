@@ -4,6 +4,8 @@
 
 **Due diligence contratual com citações verificadas contra o texto de origem.**
 
+🇧🇷 **Português** · 🇺🇸 [English](README.en.md)
+
 Responde perguntas sobre um acervo de contratos citando documento, cláusula, página e trecho literal — e **se recusa a responder** quando a resposta não está nos documentos.
 
 ![Python](https://img.shields.io/badge/Python-3.11+-14243D?style=flat-square)
