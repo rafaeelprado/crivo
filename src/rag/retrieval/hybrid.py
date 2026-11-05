@@ -155,7 +155,11 @@ def search(
     fetch_n = top_k * DOCUMENT_FILTER_FETCH_MULTIPLIER if document_filter else top_k
 
     dense_ids = dense_search(query, embedder, fetch_n, client=client)
-    lexical_ids = [] if dense_only else lexical_search(query, fetch_n, bm25=bm25, chunk_ids=chunk_ids)
+    lexical_ids = (
+        []
+        if dense_only
+        else lexical_search(query, fetch_n, bm25=bm25, chunk_ids=chunk_ids)
+    )
 
     dense_rank = {cid: i for i, cid in enumerate(dense_ids)}
     lexical_rank = {cid: i for i, cid in enumerate(lexical_ids)}
