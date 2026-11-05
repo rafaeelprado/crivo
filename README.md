@@ -174,7 +174,7 @@ Este projeto documenta o **porquê** de cada decisão, não só o como:
 sistema-rag/
 ├── assets/             logo, favicon e o diagrama de arquitetura
 ├── data/
-│   ├── raw/            PDFs originais + manifest.csv   (fora do git)
+│   ├── raw/            PDFs públicos do PNCP, versionados (+ manifest.csv)
 │   ├── processed/      chunks.jsonl                    (fora do git)
 │   └── chroma/         índice vetorial persistido      (fora do git)
 ├── src/rag/
