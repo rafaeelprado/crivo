@@ -207,3 +207,8 @@ sistema-rag/
 ## Licença
 
 MIT.
+
+
+## Nota sobre os dados
+
+Os PDFs de data/raw/ sao contratos publicos do PNCP. CPFs e RG de pessoas fisicas foram tarjados antes da publicacao. O texto e as clausulas permanecem intactos.
